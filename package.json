@@ -1,5 +1,5 @@
 {
-  "homepage": "https://<bmlt12>.github.io/<educon>",
+  "homepage": "https://<bmlt12>.github.io/educon",
   "name": "vite_react_shadcn_ts",
   "private": true,
   "version": "0.0.0",
@@ -7,8 +7,8 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-     "predeploy": "npm run build",
-       "deploy": "gh-pages -d build",
+    "predeploy": "npm run build",
+    "deploy": "gh-pages -d build",
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
     "preview": "vite preview"
