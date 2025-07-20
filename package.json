@@ -1,3 +1,7 @@
+"homepage": "https://<bmlt12>.github.io/<edu-nexus-collaborate-space>",
+"scripts": {
+  "predeploy": "npm run build",
+  "deploy": "gh-pages -d build",
 {
   "name": "vite_react_shadcn_ts",
   "private": true,
