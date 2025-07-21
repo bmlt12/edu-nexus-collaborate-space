@@ -1,6 +1,7 @@
 import { useAuth } from '@/hooks/useAuth';
+import { useStats } from '@/hooks/useStats';
 import Navigation from '@/components/Navigation';
-import { User, Edit, Camera } from 'lucide-react';
+import { User, Edit, Camera, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -8,6 +9,7 @@ import { Badge } from '@/components/ui/badge';
 
 const Profile = () => {
   const { user, profile } = useAuth();
+  const { stats } = useStats();
 
   const getInitials = (name: string) => {
     return name
@@ -86,19 +88,27 @@ const Profile = () => {
               <CardContent>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   <div className="text-center">
-                    <p className="text-2xl font-bold text-primary">12</p>
+                    <p className="text-2xl font-bold text-primary">
+                      {stats.userStats?.filesUploaded || 0}
+                    </p>
                     <p className="text-sm text-muted-foreground">Files Uploaded</p>
                   </div>
                   <div className="text-center">
-                    <p className="text-2xl font-bold text-primary">8</p>
+                    <p className="text-2xl font-bold text-primary">
+                      {stats.userStats?.questionsAsked || 0}
+                    </p>
                     <p className="text-sm text-muted-foreground">Questions Asked</p>
                   </div>
                   <div className="text-center">
-                    <p className="text-2xl font-bold text-primary">24</p>
+                    <p className="text-2xl font-bold text-primary">
+                      {stats.userStats?.answersGiven || 0}
+                    </p>
                     <p className="text-sm text-muted-foreground">Answers Given</p>
                   </div>
                   <div className="text-center">
-                    <p className="text-2xl font-bold text-primary">3</p>
+                    <p className="text-2xl font-bold text-primary">
+                      {stats.userStats?.groupsJoined || 0}
+                    </p>
                     <p className="text-sm text-muted-foreground">Groups Joined</p>
                   </div>
                 </div>
@@ -111,15 +121,44 @@ const Profile = () => {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {[1, 2, 3].map((item) => (
-                    <div key={item} className="flex items-start space-x-3 p-3 rounded-lg bg-muted/50">
-                      <div className="h-2 w-2 bg-primary rounded-full mt-2"></div>
+                  <div className="flex items-start space-x-3 p-3 rounded-lg bg-muted/50">
+                    <div className="h-2 w-2 bg-primary rounded-full mt-2"></div>
+                    <div>
+                      <p className="text-sm font-medium">
+                        Joined {new Date(profile?.created_at || Date.now()).toLocaleDateString()}
+                      </p>
+                      <p className="text-xs text-muted-foreground flex items-center">
+                        <Clock className="h-3 w-3 mr-1" />
+                        Member since
+                      </p>
+                    </div>
+                  </div>
+                  {stats.userStats && stats.userStats.filesUploaded > 0 && (
+                    <div className="flex items-start space-x-3 p-3 rounded-lg bg-muted/50">
+                      <div className="h-2 w-2 bg-success rounded-full mt-2"></div>
                       <div>
-                        <p className="text-sm font-medium">Uploaded "Data Structures Notes"</p>
-                        <p className="text-xs text-muted-foreground">{item} hour{item > 1 ? 's' : ''} ago</p>
+                        <p className="text-sm font-medium">
+                          Uploaded {stats.userStats.filesUploaded} files
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          Contributing to the community
+                        </p>
                       </div>
                     </div>
-                  ))}
+                  )}
+                  {stats.userStats && stats.userStats.groupsJoined > 0 && (
+                    <div className="flex items-start space-x-3 p-3 rounded-lg bg-muted/50">
+                      <div className="h-2 w-2 bg-accent rounded-full mt-2"></div>
+                      <div>
+                        <p className="text-sm font-medium">
+                          Active in {stats.userStats.groupsJoined} study groups
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          Collaborating with peers
+                        </p>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>

@@ -1,11 +1,13 @@
-import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useAuth } from '@/hooks/useAuth';
-import { supabase } from '@/integrations/supabase/client';
+import { useStats } from '@/hooks/useStats';
+import { useFiles } from '@/hooks/useFiles';
+import { useDiscussions } from '@/hooks/useDiscussions';
+import { useGroups } from '@/hooks/useGroups';
 import { 
   BookOpen, 
   MessageSquare, 
@@ -19,40 +21,21 @@ import {
   ArrowRight
 } from 'lucide-react';
 
-interface QuickStats {
-  totalFiles: number;
-  totalDiscussions: number;
-  totalGroups: number;
-  recentActivity: number;
-}
-
 const Dashboard = () => {
   const { profile } = useAuth();
-  const [stats, setStats] = useState<QuickStats>({
-    totalFiles: 0,
-    totalDiscussions: 0,
-    totalGroups: 0,
-    recentActivity: 0
-  });
+  const { stats } = useStats();
+  const { files } = useFiles();
+  const { discussions } = useDiscussions();
+  const { groups } = useGroups();
 
-  // Placeholder data for demonstration
-  const recentFiles = [
-    { name: 'Computer Networks - Chapter 5.pdf', uploader: 'Sarah Johnson', time: '2 hours ago', downloads: 24 },
-    { name: 'Linear Algebra Solutions.pdf', uploader: 'Mike Chen', time: '5 hours ago', downloads: 18 },
-    { name: 'Database Design Slides.pptx', uploader: 'Alex Rodriguez', time: '1 day ago', downloads: 31 }
-  ];
+  // Get recent files (last 3)
+  const recentFiles = files.slice(0, 3);
 
-  const recentDiscussions = [
-    { title: 'Help with Algorithm complexity', author: 'Emma Wilson', replies: 7, solved: false, time: '30 min ago' },
-    { title: 'Study group for finals?', author: 'David Kim', replies: 12, solved: false, time: '1 hour ago' },
-    { title: 'Explanation of Heap Sort', author: 'Lisa Zhang', replies: 5, solved: true, time: '3 hours ago' }
-  ];
+  // Get recent discussions (last 3)
+  const recentDiscussions = discussions.slice(0, 3);
 
-  const activeGroups = [
-    { name: 'CS 301 Study Group', members: 8, activity: 'high' },
-    { name: 'Math Tutoring Circle', members: 12, activity: 'medium' },
-    { name: 'Final Exam Prep', members: 15, activity: 'high' }
-  ];
+  // Get user's groups (last 3)
+  const activeGroups = groups.filter(g => g.is_member).slice(0, 3);
 
   const quickActions = [
     { 
@@ -85,15 +68,16 @@ const Dashboard = () => {
     }
   ];
 
-  useEffect(() => {
-    // Load basic stats (placeholder implementation)
-    setStats({
-      totalFiles: 156,
-      totalDiscussions: 89,
-      totalGroups: 23,
-      recentActivity: 47
-    });
-  }, []);
+  const formatTimeAgo = (dateString: string) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffInHours = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60));
+    
+    if (diffInHours < 1) return 'Just now';
+    if (diffInHours < 24) return `${diffInHours} hour${diffInHours > 1 ? 's' : ''} ago`;
+    const diffInDays = Math.floor(diffInHours / 24);
+    return `${diffInDays} day${diffInDays > 1 ? 's' : ''} ago`;
+  };
 
   const getInitials = (name: string) => {
     return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
@@ -215,18 +199,18 @@ const Dashboard = () => {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
-            {recentFiles.map((file, index) => (
-              <div key={index} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+            {recentFiles.map((file) => (
+              <div key={file.id} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
                 <div className="flex-1 min-w-0">
-                  <p className="font-medium truncate">{file.name}</p>
+                  <p className="font-medium truncate">{file.title}</p>
                   <p className="text-sm text-muted-foreground">
-                    by {file.uploader} • {file.time}
+                    by {file.uploader?.full_name || 'Unknown'} • {formatTimeAgo(file.created_at)}
                   </p>
                 </div>
                 <div className="flex items-center space-x-2 ml-2">
                   <Badge variant="secondary" className="text-xs">
                     <Download className="h-3 w-3 mr-1" />
-                    {file.downloads}
+                    {file.download_count}
                   </Badge>
                 </div>
               </div>
@@ -251,11 +235,11 @@ const Dashboard = () => {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
-            {recentDiscussions.map((discussion, index) => (
-              <div key={index} className="p-3 bg-muted/50 rounded-lg">
+            {recentDiscussions.map((discussion) => (
+              <div key={discussion.id} className="p-3 bg-muted/50 rounded-lg">
                 <div className="flex items-start justify-between mb-2">
                   <h4 className="font-medium text-sm line-clamp-2">{discussion.title}</h4>
-                  {discussion.solved && (
+                  {discussion.is_solved && (
                     <Badge className="bg-success text-success-foreground ml-2">
                       <Star className="h-3 w-3 mr-1" />
                       Solved
@@ -263,8 +247,8 @@ const Dashboard = () => {
                   )}
                 </div>
                 <div className="flex items-center justify-between text-sm text-muted-foreground">
-                  <span>by {discussion.author}</span>
-                  <span>{discussion.replies} replies • {discussion.time}</span>
+                  <span>by {discussion.author?.full_name || 'Unknown'}</span>
+                  <span>{discussion.reply_count} replies • {formatTimeAgo(discussion.created_at)}</span>
                 </div>
               </div>
             ))}
@@ -288,8 +272,8 @@ const Dashboard = () => {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
-            {activeGroups.map((group, index) => (
-              <div key={index} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+            {activeGroups.map((group) => (
+              <div key={group.id} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
                 <div className="flex items-center space-x-3">
                   <Avatar className="h-8 w-8">
                     <AvatarFallback className="bg-primary text-primary-foreground">
@@ -298,11 +282,11 @@ const Dashboard = () => {
                   </Avatar>
                   <div>
                     <p className="font-medium text-sm">{group.name}</p>
-                    <p className="text-xs text-muted-foreground">{group.members} members</p>
+                    <p className="text-xs text-muted-foreground">{group.member_count} members</p>
                   </div>
                 </div>
-                <Badge className={getActivityBadge(group.activity)}>
-                  {group.activity}
+                <Badge className={getActivityBadge('high')}>
+                  {group.user_role || 'member'}
                 </Badge>
               </div>
             ))}

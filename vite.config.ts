@@ -12,9 +12,9 @@ export default defineConfig(({ mode }) => ({
   plugins: [
     react(),
     mode === 'development' &&
-    componentTagger(),
-    base:"/educon"
+    componentTagger()
   ].filter(Boolean),
+  base: "/educon",
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
