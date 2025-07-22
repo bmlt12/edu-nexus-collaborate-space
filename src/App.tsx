@@ -9,6 +9,7 @@ import Auth from "./pages/Auth";
 import Library from "./pages/Library";
 import Discussions from "./pages/Discussions";
 import Groups from "./pages/Groups";
+import Chat from "./pages/Chat";
 import Upload from "./pages/Upload";
 import Profile from "./pages/Profile";
 import Settings from "./pages/Settings";
@@ -29,6 +30,7 @@ const App = () => (
             <Route path="/library" element={<Library />} />
             <Route path="/discussions" element={<Discussions />} />
             <Route path="/groups" element={<Groups />} />
+            <Route path="/chat" element={<Chat />} />
             <Route path="/upload" element={<Upload />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/settings" element={<Settings />} />

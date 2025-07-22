@@ -9,7 +9,15 @@ import {
   DropdownMenuSeparator, 
   DropdownMenuTrigger 
 } from '@/components/ui/dropdown-menu';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/hooks/useAuth';
+import { useNotifications } from '@/hooks/useNotifications';
 import { 
   GraduationCap, 
   Home, 
@@ -20,19 +28,21 @@ import {
   User,
   LogOut,
   Settings,
-  Bell
+  Bell,
+  MessageCircle
 } from 'lucide-react';
 
 const Navigation = () => {
   const { user, profile, signOut } = useAuth();
+  const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications();
   const location = useLocation();
-  const [notifications] = useState(3); // Placeholder for notifications
 
   const navItems = [
     { to: '/', icon: Home, label: 'Dashboard' },
     { to: '/library', icon: BookOpen, label: 'Library' },
     { to: '/discussions', icon: MessageSquare, label: 'Discussions' },
     { to: '/groups', icon: Users, label: 'Study Groups' },
+    { to: '/chat', icon: MessageCircle, label: 'Chat' },
     { to: '/upload', icon: Upload, label: 'Upload' },
   ];
 
@@ -88,14 +98,58 @@ const Navigation = () => {
           {/* User Actions */}
           <div className="flex items-center space-x-2">
             {/* Notifications */}
-            <Button variant="ghost" size="sm" className="relative">
-              <Bell className="h-4 w-4" />
-              {notifications > 0 && (
-                <span className="absolute -top-1 -right-1 h-4 w-4 bg-accent text-accent-foreground text-xs rounded-full flex items-center justify-center">
-                  {notifications}
-                </span>
-              )}
-            </Button>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="ghost" size="sm" className="relative">
+                  <Bell className="h-4 w-4" />
+                  {unreadCount > 0 && (
+                    <Badge className="absolute -top-1 -right-1 h-4 w-4 p-0 text-xs flex items-center justify-center">
+                      {unreadCount}
+                    </Badge>
+                  )}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-80" align="end">
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="font-semibold">Notifications</h3>
+                  {unreadCount > 0 && (
+                    <Button variant="ghost" size="sm" onClick={markAllAsRead}>
+                      Mark all read
+                    </Button>
+                  )}
+                </div>
+                <ScrollArea className="h-64">
+                  {notifications.length > 0 ? (
+                    <div className="space-y-2">
+                      {notifications.slice(0, 10).map((notification) => (
+                        <div
+                          key={notification.id}
+                          className={`p-3 rounded-lg cursor-pointer transition-colors ${
+                            notification.read ? 'bg-muted/50' : 'bg-accent/10 hover:bg-accent/20'
+                          }`}
+                          onClick={() => !notification.read && markAsRead(notification.id)}
+                        >
+                          <div className="flex items-start justify-between">
+                            <div className="space-y-1 flex-1">
+                              <p className="text-sm font-medium">{notification.title}</p>
+                              <p className="text-xs text-muted-foreground">{notification.message}</p>
+                              <p className="text-xs text-muted-foreground">
+                                {new Date(notification.created_at).toLocaleDateString()}
+                              </p>
+                            </div>
+                            {!notification.read && (
+                              <div className="h-2 w-2 bg-primary rounded-full mt-1"></div>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-center text-muted-foreground py-4">No notifications</p>
+                  )}
+                </ScrollArea>
+              </PopoverContent>
+            </Popover>
 
             {/* User Menu */}
             <DropdownMenu>

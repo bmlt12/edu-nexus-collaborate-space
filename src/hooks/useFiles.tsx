@@ -119,25 +119,97 @@ export const useFiles = () => {
     }
   };
 
-  const incrementDownloadCount = async (fileId: string) => {
+  const downloadFile = async (fileId: string, fileName: string, filePath: string) => {
+    if (!user) return { error: 'User not authenticated' };
+
     try {
-      // Fetch current count and increment
-      const { data: currentFile } = await supabase
+      // Track download
+      await supabase
+        .from('file_downloads')
+        .insert({
+          file_id: fileId,
+          user_id: user.id
+        });
+
+      // Update download count
+      await supabase
         .from('files')
-        .select('download_count')
-        .eq('id', fileId)
-        .single();
-      
-      if (currentFile) {
-        const { error } = await supabase
-          .from('files')
-          .update({ download_count: (currentFile.download_count || 0) + 1 })
-          .eq('id', fileId);
-        
-        if (error) throw error;
-      }
+        .update({ 
+          download_count: files.find(f => f.id === fileId)?.download_count + 1 || 1 
+        })
+        .eq('id', fileId);
+
+      // Get the file from storage
+      const { data, error } = await supabase.storage
+        .from('lecture-files')
+        .download(filePath);
+
+      if (error) throw error;
+
+      // Create download link
+      const url = URL.createObjectURL(data);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = fileName;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+      toast({
+        title: "Success",
+        description: "File downloaded successfully"
+      });
+
+      // Refresh files to update download count
+      fetchFiles();
+      return { success: true };
     } catch (error) {
-      console.error('Error incrementing download count:', error);
+      console.error('Error downloading file:', error);
+      toast({
+        title: "Error",
+        description: "Failed to download file",
+        variant: "destructive"
+      });
+      return { error: 'Download failed' };
+    }
+  };
+
+  const deleteFile = async (fileId: string, filePath: string) => {
+    if (!user) return { error: 'User not authenticated' };
+
+    try {
+      // Delete from storage first
+      const { error: storageError } = await supabase.storage
+        .from('lecture-files')
+        .remove([filePath]);
+
+      if (storageError) throw storageError;
+
+      // Delete from database
+      const { error: dbError } = await supabase
+        .from('files')
+        .delete()
+        .eq('id', fileId)
+        .eq('user_id', user.id); // Only allow users to delete their own files
+
+      if (dbError) throw dbError;
+
+      toast({
+        title: "Success",
+        description: "File deleted successfully"
+      });
+
+      fetchFiles();
+      return { success: true };
+    } catch (error) {
+      console.error('Error deleting file:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete file",
+        variant: "destructive"
+      });
+      return { error: 'Delete failed' };
     }
   };
 
@@ -149,7 +221,8 @@ export const useFiles = () => {
     files,
     loading,
     uploadFile,
-    incrementDownloadCount,
+    downloadFile,
+    deleteFile,
     refetch: fetchFiles
   };
 };

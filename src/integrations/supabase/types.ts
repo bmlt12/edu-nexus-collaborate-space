@@ -100,6 +100,57 @@ export type Database = {
           },
         ]
       }
+      call_sessions: {
+        Row: {
+          call_type: string
+          caller_id: string
+          conversation_id: string | null
+          duration_seconds: number | null
+          ended_at: string | null
+          group_id: string | null
+          id: string
+          started_at: string
+          status: string
+        }
+        Insert: {
+          call_type?: string
+          caller_id: string
+          conversation_id?: string | null
+          duration_seconds?: number | null
+          ended_at?: string | null
+          group_id?: string | null
+          id?: string
+          started_at?: string
+          status?: string
+        }
+        Update: {
+          call_type?: string
+          caller_id?: string
+          conversation_id?: string | null
+          duration_seconds?: number | null
+          ended_at?: string | null
+          group_id?: string | null
+          id?: string
+          started_at?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "call_sessions_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "call_sessions_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "study_groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       conversation_participants: {
         Row: {
           conversation_id: string
@@ -270,6 +321,7 @@ export type Database = {
       }
       discussions: {
         Row: {
+          attachment_urls: string[] | null
           content: string
           course: string | null
           created_at: string
@@ -283,6 +335,7 @@ export type Database = {
           vote_count: number | null
         }
         Insert: {
+          attachment_urls?: string[] | null
           content: string
           course?: string | null
           created_at?: string
@@ -296,6 +349,7 @@ export type Database = {
           vote_count?: number | null
         }
         Update: {
+          attachment_urls?: string[] | null
           content?: string
           course?: string | null
           created_at?: string
@@ -315,6 +369,35 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["user_id"]
+          },
+        ]
+      }
+      file_downloads: {
+        Row: {
+          downloaded_at: string
+          file_id: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          downloaded_at?: string
+          file_id: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          downloaded_at?: string
+          file_id?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "file_downloads_file_id_fkey"
+            columns: ["file_id"]
+            isOneToOne: false
+            referencedRelation: "files"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -379,6 +462,7 @@ export type Database = {
           group_id: string
           id: string
           joined_at: string
+          permissions: string[] | null
           role: Database["public"]["Enums"]["group_role"] | null
           user_id: string
         }
@@ -386,6 +470,7 @@ export type Database = {
           group_id: string
           id?: string
           joined_at?: string
+          permissions?: string[] | null
           role?: Database["public"]["Enums"]["group_role"] | null
           user_id: string
         }
@@ -393,6 +478,7 @@ export type Database = {
           group_id?: string
           id?: string
           joined_at?: string
+          permissions?: string[] | null
           role?: Database["public"]["Enums"]["group_role"] | null
           user_id?: string
         }
@@ -410,6 +496,57 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["user_id"]
+          },
+        ]
+      }
+      group_messages: {
+        Row: {
+          content: string | null
+          created_at: string
+          file_url: string | null
+          group_id: string
+          id: string
+          message_type: string | null
+          reply_to: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          content?: string | null
+          created_at?: string
+          file_url?: string | null
+          group_id: string
+          id?: string
+          message_type?: string | null
+          reply_to?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          content?: string | null
+          created_at?: string
+          file_url?: string | null
+          group_id?: string
+          id?: string
+          message_type?: string | null
+          reply_to?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "group_messages_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "study_groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "group_messages_reply_to_fkey"
+            columns: ["reply_to"]
+            isOneToOne: false
+            referencedRelation: "group_messages"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -470,6 +607,39 @@ export type Database = {
             referencedColumns: ["user_id"]
           },
         ]
+      }
+      notifications: {
+        Row: {
+          action_url: string | null
+          created_at: string
+          id: string
+          message: string
+          read: boolean | null
+          title: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          action_url?: string | null
+          created_at?: string
+          id?: string
+          message: string
+          read?: boolean | null
+          title: string
+          type?: string
+          user_id: string
+        }
+        Update: {
+          action_url?: string | null
+          created_at?: string
+          id?: string
+          message?: string
+          read?: boolean | null
+          title?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       post_comments: {
         Row: {
@@ -676,17 +846,51 @@ export type Database = {
           },
         ]
       }
+      user_roles: {
+        Row: {
+          assigned_at: string
+          assigned_by: string | null
+          id: string
+          role: Database["public"]["Enums"]["user_permission"]
+          user_id: string
+        }
+        Insert: {
+          assigned_at?: string
+          assigned_by?: string | null
+          id?: string
+          role?: Database["public"]["Enums"]["user_permission"]
+          user_id: string
+        }
+        Update: {
+          assigned_at?: string
+          assigned_by?: string | null
+          id?: string
+          role?: Database["public"]["Enums"]["user_permission"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      create_notification: {
+        Args: {
+          target_user_id: string
+          notification_title: string
+          notification_message: string
+          notification_type?: string
+          notification_action_url?: string
+        }
+        Returns: string
+      }
     }
     Enums: {
       file_type: "document" | "image" | "video" | "audio" | "other"
       group_role: "admin" | "moderator" | "member"
       post_type: "announcement" | "tip" | "question" | "general"
+      user_permission: "admin" | "moderator" | "member"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -817,6 +1021,7 @@ export const Constants = {
       file_type: ["document", "image", "video", "audio", "other"],
       group_role: ["admin", "moderator", "member"],
       post_type: ["announcement", "tip", "question", "general"],
+      user_permission: ["admin", "moderator", "member"],
     },
   },
 } as const
