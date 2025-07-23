@@ -9,6 +9,7 @@ export interface DiscussionData {
   content: string;
   course?: string;
   tags?: string[];
+  attachment_urls?: string[];
   is_solved: boolean;
   vote_count: number;
   reply_count: number;

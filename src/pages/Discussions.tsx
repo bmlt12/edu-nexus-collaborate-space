@@ -1,48 +1,28 @@
 import { useAuth } from '@/hooks/useAuth';
 import { useDiscussions } from '@/hooks/useDiscussions';
 import Navigation from '@/components/Navigation';
-import { MessageSquare, Plus, Search, TrendingUp, User } from 'lucide-react';
+import CreateDiscussion from '@/components/CreateDiscussion';
+import DiscussionCard from '@/components/DiscussionCard';
+import { MessageSquare, Plus, Search, TrendingUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { useState } from 'react';
-import { useToast } from '@/hooks/use-toast';
 
 const Discussions = () => {
   const { user } = useAuth();
-  const { discussions, loading, createDiscussion } = useDiscussions();
-  const { toast } = useToast();
+  const { discussions, loading, refetch } = useDiscussions();
   const [searchTerm, setSearchTerm] = useState('');
-  const [isCreating, setIsCreating] = useState(false);
+  const [showCreateForm, setShowCreateForm] = useState(false);
 
   const filteredDiscussions = discussions?.filter(discussion =>
     discussion.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    discussion.content.toLowerCase().includes(searchTerm.toLowerCase())
+    discussion.content.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    discussion.author?.full_name?.toLowerCase().includes(searchTerm.toLowerCase())
   ) || [];
 
-  const handleCreateDiscussion = async () => {
-    if (!user) return;
-    
-    setIsCreating(true);
-    try {
-      await createDiscussion({
-        title: "New Discussion",
-        content: "Start a new discussion here..."
-      });
-      toast({
-        title: "Discussion created",
-        description: "Your discussion has been created successfully."
-      });
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to create discussion.",
-        variant: "destructive"
-      });
-    } finally {
-      setIsCreating(false);
-    }
+  const handleCreateSuccess = () => {
+    setShowCreateForm(false);
+    refetch();
   };
 
   return (
@@ -54,9 +34,9 @@ const Discussions = () => {
             <MessageSquare className="h-6 w-6 sm:h-8 sm:w-8 text-primary" />
             <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Discussions</h1>
           </div>
-          <Button onClick={handleCreateDiscussion} disabled={isCreating} className="w-full sm:w-auto">
+          <Button onClick={() => setShowCreateForm(true)} className="w-full sm:w-auto">
             <Plus className="h-4 w-4 mr-2" />
-            {isCreating ? "Creating..." : "New Question"}
+            New Discussion
           </Button>
         </div>
 
@@ -72,64 +52,43 @@ const Discussions = () => {
           </div>
         </div>
 
+        {showCreateForm && (
+          <div className="mb-8">
+            <CreateDiscussion
+              onCancel={() => setShowCreateForm(false)}
+              onSuccess={handleCreateSuccess}
+            />
+          </div>
+        )}
+
         {loading ? (
-          <div className="space-y-4">
+          <div className="space-y-6">
             {[1, 2, 3].map((item) => (
-              <Card key={item} className="animate-pulse">
-                <CardHeader>
-                  <div className="h-6 bg-muted rounded w-3/4"></div>
-                </CardHeader>
-                <CardContent>
-                  <div className="h-4 bg-muted rounded w-full mb-2"></div>
-                  <div className="h-4 bg-muted rounded w-2/3"></div>
-                </CardContent>
-              </Card>
+              <div key={item} className="animate-pulse">
+                <div className="h-32 bg-muted rounded-lg"></div>
+              </div>
             ))}
           </div>
         ) : (
-          <div className="space-y-4">
+          <div className="space-y-6">
             {filteredDiscussions.length > 0 ? (
               filteredDiscussions.map((discussion) => (
-                <Card key={discussion.id} className="hover:shadow-lg transition-shadow">
-                  <CardHeader>
-                    <div className="flex items-start justify-between gap-4">
-                      <CardTitle className="text-base sm:text-lg leading-tight">{discussion.title}</CardTitle>
-                      <Badge variant={discussion.is_solved ? "default" : "secondary"} className="shrink-0">
-                        {discussion.is_solved ? "Solved" : "Open"}
-                      </Badge>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-muted-foreground text-sm mb-4 line-clamp-2">
-                      {discussion.content}
-                    </p>
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-sm text-muted-foreground">
-                      <div className="flex items-center space-x-2 sm:space-x-4">
-                        <div className="flex items-center space-x-1">
-                          <User className="h-3 w-3" />
-                          <span className="truncate">{discussion.author?.full_name || 'Anonymous'}</span>
-                        </div>
-                        <span className="text-xs">{new Date(discussion.created_at).toLocaleDateString()}</span>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <TrendingUp className="h-4 w-4" />
-                        <span>{discussion.vote_count} votes</span>
-                        <span>•</span>
-                        <span>{discussion.reply_count} replies</span>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
+                <DiscussionCard key={discussion.id} discussion={discussion} />
               ))
             ) : (
-              <Card>
-                <CardContent className="text-center py-8">
-                  <MessageSquare className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                  <p className="text-muted-foreground">
-                    {searchTerm ? 'No discussions found matching your search.' : 'No discussions yet. Start the conversation!'}
-                  </p>
-                </CardContent>
-              </Card>
+              <div className="text-center py-12">
+                <MessageSquare className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                <p className="text-muted-foreground text-lg mb-2">
+                  {searchTerm ? 'No discussions found matching your search.' : 'No discussions yet'}
+                </p>
+                <p className="text-muted-foreground mb-4">
+                  Start the conversation by creating the first discussion!
+                </p>
+                <Button onClick={() => setShowCreateForm(true)}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Create First Discussion
+                </Button>
+              </div>
             )}
           </div>
         )}

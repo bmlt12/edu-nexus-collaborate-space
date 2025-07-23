@@ -170,6 +170,7 @@ export const useGroupChat = (groupId: string) => {
 
   return {
     messages,
+    members: [], // TODO: Implement member fetching
     loading,
     sendMessage,
     uploadFile,

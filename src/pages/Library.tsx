@@ -2,17 +2,57 @@ import { useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useFiles } from '@/hooks/useFiles';
 import Navigation from '@/components/Navigation';
-import { BookOpen, Search, Filter, Download, Clock } from 'lucide-react';
+import { BookOpen, Search, Filter, Download, Clock, Trash2, FileText, Image, Video, Music } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Link } from 'react-router-dom';
+import { useToast } from '@/hooks/use-toast';
 
 const Library = () => {
   const { user } = useAuth();
-  const { files, loading } = useFiles();
+  const { files, loading, downloadFile, deleteFile } = useFiles();
+  const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState('');
+
+  const getFileIcon = (fileType: string) => {
+    switch (fileType) {
+      case 'image': return <Image className="h-5 w-5" />;
+      case 'video': return <Video className="h-5 w-5" />;
+      case 'audio': return <Music className="h-5 w-5" />;
+      default: return <FileText className="h-5 w-5" />;
+    }
+  };
+
+  const handleDownload = async (file: any) => {
+    const result = await downloadFile(file.id, file.file_name, file.file_path);
+    if (result?.success) {
+      toast({
+        title: "Download started",
+        description: `${file.file_name} is being downloaded.`
+      });
+    }
+  };
+
+  const handleDelete = async (file: any) => {
+    if (file.user_id !== user?.id) {
+      toast({
+        title: "Error",
+        description: "You can only delete your own files.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    const result = await deleteFile(file.id, file.file_path);
+    if (result?.success) {
+      toast({
+        title: "File deleted",
+        description: `${file.file_name} has been deleted.`
+      });
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-background">
@@ -57,10 +97,40 @@ const Library = () => {
               .map((file) => (
                 <Card key={file.id} className="hover:shadow-lg transition-shadow">
                   <CardHeader>
-                    <CardTitle className="text-lg truncate">{file.title}</CardTitle>
+                    <div className="flex items-start justify-between">
+                      <div className="flex items-center space-x-2">
+                        {getFileIcon(file.file_type)}
+                        <CardTitle className="text-lg truncate">{file.title}</CardTitle>
+                      </div>
+                      <div className="flex items-center space-x-1">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleDownload(file)}
+                          className="h-8 w-8 p-0"
+                        >
+                          <Download className="h-4 w-4" />
+                        </Button>
+                        {file.user_id === user?.id && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleDelete(file)}
+                            className="h-8 w-8 p-0 text-destructive hover:text-destructive"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        )}
+                      </div>
+                    </div>
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-2">
+                      {file.description && (
+                        <p className="text-sm text-muted-foreground line-clamp-2">
+                          {file.description}
+                        </p>
+                      )}
                       <p className="text-muted-foreground text-sm">
                         {file.course || 'General'} • {file.file_type}
                       </p>
