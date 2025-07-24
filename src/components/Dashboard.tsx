@@ -60,11 +60,11 @@ const Dashboard = () => {
       color: 'bg-gradient-success'
     },
     { 
-      title: 'Browse Library', 
-      description: 'Explore resources', 
-      icon: BookOpen, 
-      to: '/library',
-      color: 'bg-primary'
+      title: 'Start Chat', 
+      description: 'Message other students', 
+      icon: MessageSquare, 
+      to: '/chat',
+      color: 'bg-gradient-secondary'
     }
   ];
 

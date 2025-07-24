@@ -38,10 +38,10 @@ export const useGroupChat = (groupId: string) => {
         .from('group_messages')
         .select(`
           *,
-          author:profiles!group_messages_user_id_fkey(full_name, avatar_url),
+          author:profiles!group_messages_user_id_profiles_fkey(full_name, avatar_url),
           reply_to_message:group_messages!group_messages_reply_to_fkey(
             content,
-            author:profiles!group_messages_user_id_fkey(full_name)
+            author:profiles!group_messages_user_id_profiles_fkey(full_name)
           )
         `)
         .eq('group_id', groupId)

@@ -2,12 +2,13 @@ import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useChat } from '@/hooks/useChat';
 import Navigation from '@/components/Navigation';
+import CreateConversation from '@/components/CreateConversation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { MessageCircle, Send, Plus, Phone, Video, Paperclip, MoreVertical } from 'lucide-react';
+import { MessageCircle, Send, Plus, Phone, Video, Paperclip, MoreVertical, ArrowLeft } from 'lucide-react';
 import { 
   DropdownMenu, 
   DropdownMenuContent, 
@@ -19,7 +20,7 @@ import { useToast } from '@/hooks/use-toast';
 
 const Chat = () => {
   const { user } = useAuth();
-  const { conversations, messages, createConversation, sendMessage, fetchMessages } = useChat();
+  const { conversations, messages, sendMessage, fetchMessages } = useChat();
   const { toast } = useToast();
   const [selectedConversation, setSelectedConversation] = useState<string>('');
   const [messageInput, setMessageInput] = useState('');
@@ -56,6 +57,12 @@ const Chat = () => {
     }
   };
 
+  const handleConversationCreated = (conversationId: string) => {
+    setIsCreatingChat(false);
+    setSelectedConversation(conversationId);
+    fetchMessages(conversationId);
+  };
+
   const getConversationName = (conversation: any) => {
     if (conversation.is_group) {
       return conversation.name || 'Group Chat';
@@ -79,6 +86,22 @@ const Chat = () => {
   };
 
   const currentMessages = selectedConversation ? messages[selectedConversation] || [] : [];
+
+  if (isCreatingChat) {
+    return (
+      <div className="min-h-screen bg-gradient-background">
+        <Navigation />
+        <div className="container mx-auto px-4 py-6">
+          <div className="flex justify-center">
+            <CreateConversation
+              onConversationCreated={handleConversationCreated}
+              onCancel={() => setIsCreatingChat(false)}
+            />
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-background">
