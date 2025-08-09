@@ -10,7 +10,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Loader2, GraduationCap } from 'lucide-react';
 
 const Auth = () => {
-  const { user, signIn, signUp, loading } = useAuth();
+  const { user, signIn, signUp, resetPassword, loading } = useAuth();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
 
@@ -69,6 +69,37 @@ const Auth = () => {
       });
     }
     
+    setIsLoading(false);
+  };
+
+  const handleForgotPassword = async () => {
+    const emailInput = document.getElementById('signin-email') as HTMLInputElement;
+    const email = emailInput?.value;
+    
+    if (!email) {
+      toast({
+        title: "Email required",
+        description: "Please enter your email address first.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsLoading(true);
+    const { error } = await resetPassword(email);
+    
+    if (error) {
+      toast({
+        title: "Reset failed",
+        description: error.message,
+        variant: "destructive"
+      });
+    } else {
+      toast({
+        title: "Reset email sent",
+        description: "Check your email for password reset instructions."
+      });
+    }
     setIsLoading(false);
   };
 
@@ -147,6 +178,17 @@ const Auth = () => {
                       'Sign In'
                     )}
                   </Button>
+                  
+                  <div className="text-center">
+                    <button
+                      type="button"
+                      onClick={handleForgotPassword}
+                      className="text-sm text-muted-foreground hover:text-primary transition-colors underline"
+                      disabled={isLoading}
+                    >
+                      Forgot Password?
+                    </button>
+                  </div>
                 </form>
               </TabsContent>
 
@@ -212,6 +254,12 @@ const Auth = () => {
             </CardContent>
           </Tabs>
         </Card>
+        
+        <footer className="mt-6 text-center">
+          <p className="text-xs text-muted-foreground">
+            By Boadu Patrick
+          </p>
+        </footer>
       </div>
     </div>
   );
