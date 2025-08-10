@@ -1,17 +1,20 @@
 import { useAuth } from '@/hooks/useAuth';
 import { useStats } from '@/hooks/useStats';
 import { useNavigate } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
 import Navigation from '@/components/Navigation';
 import { User, Edit, Camera, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
+import { useToast } from '@/hooks/use-toast';
 
 const Profile = () => {
   const { user, profile } = useAuth();
   const { stats } = useStats();
   const navigate = useNavigate();
+  const { toast } = useToast();
 
   const getInitials = (name: string) => {
     return name
@@ -20,6 +23,57 @@ const Profile = () => {
       .join('')
       .toUpperCase()
       .slice(0, 2);
+  };
+
+  const handleAvatarUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file || !user) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast({
+        title: "File too large",
+        description: "Please choose an image smaller than 5MB",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${user.id}-${Date.now()}.${fileExt}`;
+      const filePath = `avatars/${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('avatars')
+        .upload(filePath, file, { upsert: true });
+
+      if (uploadError) throw uploadError;
+
+      const { data } = supabase.storage
+        .from('avatars')
+        .getPublicUrl(filePath);
+
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({ avatar_url: data.publicUrl })
+        .eq('user_id', user.id);
+
+      if (updateError) throw updateError;
+
+      toast({
+        title: "Profile picture updated",
+        description: "Your profile picture has been updated successfully."
+      });
+
+      // Refresh the page to show the new avatar
+      window.location.reload();
+    } catch (error: any) {
+      toast({
+        title: "Upload failed", 
+        description: error.message,
+        variant: "destructive"
+      });
+    }
   };
 
   return (
@@ -36,8 +90,8 @@ const Profile = () => {
             <Card>
               <CardContent className="pt-6">
                 <div className="flex flex-col items-center space-y-4">
-                  <div className="relative">
-                    <Avatar className="h-24 w-24">
+                  <div className="relative group">
+                    <Avatar className="h-24 w-24 transition-all duration-200 group-hover:scale-105">
                       <AvatarImage 
                         src={profile?.avatar_url || ''} 
                         alt={profile?.full_name || 'User'}
@@ -46,9 +100,15 @@ const Profile = () => {
                         {profile?.full_name ? getInitials(profile.full_name) : 'U'}
                       </AvatarFallback>
                     </Avatar>
-                    <Button size="sm" className="absolute -bottom-2 -right-2 h-8 w-8 rounded-full p-0">
-                      <Camera className="h-4 w-4" />
-                    </Button>
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-full opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
+                      <Camera className="h-6 w-6 text-white" />
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleAvatarUpload}
+                        className="absolute inset-0 opacity-0 cursor-pointer"
+                      />
+                    </div>
                   </div>
                   
                   <div className="text-center">
