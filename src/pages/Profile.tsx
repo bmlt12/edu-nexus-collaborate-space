@@ -1,5 +1,6 @@
 import { useAuth } from '@/hooks/useAuth';
 import { useStats } from '@/hooks/useStats';
+import { useNavigate } from 'react-router-dom';
 import Navigation from '@/components/Navigation';
 import { User, Edit, Camera, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -10,6 +11,7 @@ import { Badge } from '@/components/ui/badge';
 const Profile = () => {
   const { user, profile } = useAuth();
   const { stats } = useStats();
+  const navigate = useNavigate();
 
   const getInitials = (name: string) => {
     return name
@@ -60,7 +62,7 @@ const Profile = () => {
                     {profile?.level && <Badge variant="outline">{profile.level}</Badge>}
                   </div>
                   
-                  <Button className="w-full">
+                  <Button className="w-full" onClick={() => navigate('/profile/edit')}>
                     <Edit className="h-4 w-4 mr-2" />
                     Edit Profile
                   </Button>
